@@ -9,6 +9,7 @@ import {
   OfficeBuilding,
   SwitchButton,
   Setting,
+  Money,
 } from '@element-plus/icons-vue'
 
 const auth = useAuthStore()
@@ -20,6 +21,8 @@ const activeMenu = computed(() => {
   if (path.startsWith('/employees')) return '/employees'
   if (path.startsWith('/departments')) return '/departments'
   if (path.startsWith('/users')) return '/users'
+  if (path.startsWith('/salary/structures')) return '/salary/structures'
+  if (path.startsWith('/salary/records')) return '/salary/records'
   return path
 })
 
@@ -76,6 +79,14 @@ function handleLogout() {
               <el-icon><Setting /></el-icon>
               <span>用户管理</span>
             </el-menu-item>
+            <el-sub-menu index="/salary">
+              <template #title>
+                <el-icon><Money /></el-icon>
+                <span>薪资管理</span>
+              </template>
+              <el-menu-item index="/salary/structures">薪资结构</el-menu-item>
+              <el-menu-item index="/salary/records">薪资记录</el-menu-item>
+            </el-sub-menu>
           </el-menu>
         </div>
         <div class="header-right">

@@ -4,16 +4,19 @@ import { useEmployeeStore } from '@/stores/employees'
 import { useDepartmentStore } from '@/stores/departments'
 import { useUserStore } from '@/stores/users'
 import { useAuthStore } from '@/stores/auth'
-import { User, OfficeBuilding, Avatar, Plus, List, Setting } from '@element-plus/icons-vue'
+import { useSalaryStore } from '@/stores/salary'
+import { User, OfficeBuilding, Avatar, Money, Plus, List, Setting } from '@element-plus/icons-vue'
 
 const employeeStore = useEmployeeStore()
 const departmentStore = useDepartmentStore()
 const userStore = useUserStore()
+const salaryStore = useSalaryStore()
 const auth = useAuthStore()
 
 const empTotal = ref(0)
 const deptTotal = ref(0)
 const userTotal = ref(0)
+const salaryStructTotal = ref(0)
 
 onMounted(async () => {
   try {
@@ -30,6 +33,10 @@ onMounted(async () => {
       userTotal.value = userStore.users.length
     } catch { /* ignore */ }
   }
+  try {
+    await salaryStore.fetchStructures()
+    salaryStructTotal.value = salaryStore.structTotal
+  } catch { /* ignore */ }
 })
 </script>
 
@@ -69,6 +76,17 @@ onMounted(async () => {
           </div>
         </el-card>
       </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover" class="stat-card">
+          <div class="stat-body">
+            <el-icon class="stat-icon" :size="48" color="#f56c6c"><Money /></el-icon>
+            <div class="stat-info">
+              <div class="stat-value">{{ salaryStructTotal }}</div>
+              <div class="stat-label">薪资结构</div>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
     </el-row>
 
     <el-card>
@@ -79,6 +97,8 @@ onMounted(async () => {
         <el-button :icon="List" @click="$router.push('/employees')">员工列表</el-button>
         <el-button :icon="List" @click="$router.push('/departments')">部门列表</el-button>
         <el-button v-if="auth.isAdmin" :icon="Setting" type="warning" @click="$router.push('/users')">用户管理</el-button>
+        <el-button :icon="Money" @click="$router.push('/salary/structures')">薪资结构</el-button>
+        <el-button :icon="Money" @click="$router.push('/salary/records')">薪资记录</el-button>
       </el-space>
     </el-card>
   </div>

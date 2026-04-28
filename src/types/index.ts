@@ -52,6 +52,47 @@ export interface User {
   updated_at: string
 }
 
+export interface SalaryStructure {
+  id: number
+  employee_id: number
+  employee: Employee | null
+  base_salary: number
+  position_allowance: number
+  performance_factor: number
+  created_by: string
+  updated_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface SalaryStructureForm {
+  employee_id: number | undefined
+  base_salary: number
+  position_allowance: number
+  performance_factor: number
+}
+
+export interface SalaryRecord {
+  id: number
+  employee_id: number
+  employee: Employee | null
+  year: number
+  month: number
+  base_salary: number
+  position_allowance: number
+  performance_factor: number
+  actual_salary: number
+  created_by: string
+  created_at: string
+}
+
+export interface SalaryRecordForm {
+  employee_id: number | undefined
+  year: number
+  month: number
+  performance_factor: number
+}
+
 export interface ListQuery {
   keyword?: string
   sort_by?: string

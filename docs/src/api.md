@@ -11,10 +11,6 @@
 | POST | /api/auth/logout | 登出（需 JWT） | - |
 | GET | /api/auth/me | 获取当前用户（需 JWT） | - |
 
-登录返回：`{ code: 200, data: { token } }`
-
-登录后需调 `GET /auth/me` 获取用户信息（含 roles）。
-
 ## 用户接口（需 admin 角色）
 
 | 方法 | 路径 | 说明 | 请求体 |
@@ -29,6 +25,27 @@
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | /api/roles | 角色列表 |
+
+## 薪资结构接口
+
+| 方法 | 路径 | 说明 | 参数/请求体 |
+|------|------|------|------------|
+| GET | /api/salaries/structures | 薪资结构列表（分页） | keyword, sort_by, sort_desc, page, page_size |
+| GET | /api/salaries/structures/:id | 薪资结构详情 | - |
+| POST | /api/salaries/structures | 创建薪资结构 | { employee_id, base_salary, bonus, deduction } |
+| PUT | /api/salaries/structures/:id | 更新薪资结构 | 同上 |
+| DELETE | /api/salaries/structures/:id | 删除薪资结构 | - |
+
+## 薪资记录接口
+
+| 方法 | 路径 | 说明 | 参数/请求体 |
+|------|------|------|------------|
+| GET | /api/salaries/records | 薪资记录列表（分页） | keyword, sort_by, sort_desc, page, page_size |
+| GET | /api/salaries/records/employee/:id | 按员工查记录 | 同上 |
+| GET | /api/salaries/records/:id | 薪资记录详情 | - |
+| POST | /api/salaries/records | 创建薪资记录 | { employee_id, year, month, actual_salary, status } |
+| PUT | /api/salaries/records/:id | 更新薪资记录 | 同上 |
+| DELETE | /api/salaries/records/:id | 删除薪资记录 | - |
 
 ## 员工接口
 
@@ -58,9 +75,38 @@
 { "code": 200, "data": ..., "message": "..." }
 ```
 
-前端 Axios 拦截器自动提取 `data` 字段，错误时自动弹出 `message`。
-
 ## 数据模型
+
+### SalaryStructure
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | number | 自增主键 |
+| employee_id | number | 员工 ID（唯一） |
+| employee | object | 预加载的员工信息 |
+| base_salary | number | 基本工资 |
+| bonus | number | 奖金 |
+| deduction | number | 扣款 |
+| created_by | string | 创建人 |
+| updated_by | string | 更新人 |
+| created_at | string | 创建时间 |
+| updated_at | string | 更新时间 |
+
+### SalaryRecord
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| id | number | 自增主键 |
+| employee_id | number | 员工 ID |
+| employee | object | 预加载的员工信息 |
+| year | number | 年份 |
+| month | number | 月份 |
+| actual_salary | number | 实发工资 |
+| status | string | 状态：draft/approved/paid |
+| created_by | string | 创建人 |
+| updated_by | string | 更新人 |
+| created_at | string | 创建时间 |
+| updated_at | string | 更新时间 |
 
 ### User
 
@@ -79,7 +125,7 @@
 |------|------|------|
 | id | number | 自增主键 |
 | name | string | 角色名：admin/manager/staff |
-| description | string | 描述：系统管理员/部门经理/普通员工 |
+| description | string | 描述 |
 
 ### Employee
 
@@ -115,7 +161,7 @@
 | 角色 | 权限 |
 |------|------|
 | admin | 所有操作 + 用户管理 |
-| manager | 员工/部门增删改查 |
+| manager | 员工/部门/薪资增删改查 |
 | staff | 员工/部门只读 |
 
 ## 后端错误消息
@@ -133,3 +179,8 @@
 | invalid status | 无效的状态值 |
 | unauthorized | 未授权 |
 | forbidden | 权限不足 |
+| salary structure already exists for this employee | 该员工已有薪资结构 |
+| salary structure not found | 薪资结构不存在 |
+| salary record already exists for this employee and month | 该员工当月已有薪资记录 |
+| salary record not found | 薪资记录不存在 |
+| invalid year or month | 无效的年份或月份 |

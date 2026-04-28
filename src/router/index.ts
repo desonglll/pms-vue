@@ -53,6 +53,38 @@ const router = createRouter({
       component: () => import('@/views/users/UserList.vue'),
       meta: { admin: true },
     },
+    {
+      path: '/salary/structures',
+      name: 'salary-structure-list',
+      component: () => import('@/views/salary/SalaryStructureList.vue'),
+    },
+    {
+      path: '/salary/structures/new',
+      name: 'salary-structure-new',
+      component: () => import('@/views/salary/SalaryStructureForm.vue'),
+    },
+    {
+      path: '/salary/structures/:id/edit',
+      name: 'salary-structure-edit',
+      component: () => import('@/views/salary/SalaryStructureForm.vue'),
+      props: true,
+    },
+    {
+      path: '/salary/records',
+      name: 'salary-record-list',
+      component: () => import('@/views/salary/SalaryRecordList.vue'),
+    },
+    {
+      path: '/salary/records/new',
+      name: 'salary-record-new',
+      component: () => import('@/views/salary/SalaryRecordForm.vue'),
+    },
+    {
+      path: '/salary/records/:id/edit',
+      name: 'salary-record-edit',
+      component: () => import('@/views/salary/SalaryRecordForm.vue'),
+      props: true,
+    },
   ],
 })
 
