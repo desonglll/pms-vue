@@ -1,0 +1,7 @@
+[book]
+title = "HR 前端文档"
+authors = ["shinoda"]
+language = "zh"
+
+[build]
+build-dir = "book"
