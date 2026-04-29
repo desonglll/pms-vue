@@ -9,6 +9,10 @@ export function getEmployee(id: number) {
   return http.get<Employee>(`/employees/${id}`)
 }
 
+export function getMyEmployee() {
+  return http.get<Employee>('/employees/me')
+}
+
 export function createEmployee(data: EmployeeForm) {
   return http.post<Employee>('/employees', data)
 }

@@ -16,3 +16,7 @@ export function updateUserStatus(id: number, status: string) {
 export function assignRoles(id: number, role_ids: number[]) {
   return http.put(`/users/${id}/roles`, { role_ids })
 }
+
+export function updateUserPassword(id: number, password: string) {
+  return http.put(`/users/${id}/password`, { password })
+}

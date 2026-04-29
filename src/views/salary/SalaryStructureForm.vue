@@ -16,7 +16,7 @@ const formRef = ref()
 const loading = ref(false)
 
 const form = ref<SalaryStructureForm>({
-  employee_id: undefined,
+  employee_id: undefined as unknown as number,
   base_salary: 0,
   position_allowance: 0,
   performance_factor: 1,
@@ -28,12 +28,11 @@ const rules = {
 }
 
 const calculatedTotal = computed(() => {
-  return (form.value.base_salary + form.value.position_allowance) * form.value.performance_factor
+  return (form.value.base_salary + form.value.position_allowance) * (form.value.performance_factor || 1)
 })
 
 onMounted(async () => {
   await employeeStore.fetchAll()
-  // 确保薪资结构列表已加载
   if (salaryStore.structures.length === 0) {
     await salaryStore.fetchStructures()
   }
@@ -63,7 +62,7 @@ async function handleSubmit() {
     ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
     router.push({ name: 'salary-structure-list' })
   } catch {
-    // 拦截器已弹出错误提示
+    // interceptor handles error
   } finally {
     loading.value = false
   }
@@ -82,12 +81,7 @@ async function handleSubmit() {
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="max-width: 600px">
         <el-form-item label="员工" prop="employee_id">
           <el-select v-model="form.employee_id" placeholder="请选择员工" filterable style="width: 100%" :disabled="isEdit">
-            <el-option
-              v-for="emp in employeeStore.employees"
-              :key="emp.id"
-              :label="`${emp.name} (${emp.email})`"
-              :value="emp.id"
-            />
+            <el-option v-for="emp in employeeStore.employees" :key="emp.id" :label="`${emp.name} (${emp.email})`" :value="emp.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="基本工资" prop="base_salary">

@@ -5,7 +5,7 @@ import { useDepartmentStore } from '@/stores/departments'
 import { useUserStore } from '@/stores/users'
 import { useAuthStore } from '@/stores/auth'
 import { useSalaryStore } from '@/stores/salary'
-import { User, OfficeBuilding, Avatar, Money, Plus, List, Setting } from '@element-plus/icons-vue'
+import { User, OfficeBuilding, Avatar, Money, Plus, List, Setting, Clock, Calendar, Document } from '@element-plus/icons-vue'
 
 const employeeStore = useEmployeeStore()
 const departmentStore = useDepartmentStore()
@@ -32,11 +32,11 @@ onMounted(async () => {
       await userStore.fetchAll()
       userTotal.value = userStore.users.length
     } catch { /* ignore */ }
+    try {
+      await salaryStore.fetchStructures()
+      salaryStructTotal.value = salaryStore.structTotal
+    } catch { /* ignore */ }
   }
-  try {
-    await salaryStore.fetchStructures()
-    salaryStructTotal.value = salaryStore.structTotal
-  } catch { /* ignore */ }
 })
 </script>
 
@@ -76,7 +76,7 @@ onMounted(async () => {
           </div>
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col v-if="auth.isAdmin" :span="6">
         <el-card shadow="hover" class="stat-card">
           <div class="stat-body">
             <el-icon class="stat-icon" :size="48" color="#f56c6c"><Money /></el-icon>
@@ -92,13 +92,17 @@ onMounted(async () => {
     <el-card>
       <template #header>快捷操作</template>
       <el-space wrap :size="12">
-        <el-button type="primary" :icon="Plus" @click="$router.push('/employees/new')">新增员工</el-button>
-        <el-button :icon="Plus" @click="$router.push('/departments/new')">新增部门</el-button>
-        <el-button :icon="List" @click="$router.push('/employees')">员工列表</el-button>
+        <el-button v-if="auth.isAdmin || auth.isManager" type="primary" :icon="Plus" @click="$router.push('/employees/new')">新增员工</el-button>
+        <el-button v-if="auth.isAdmin || auth.isManager" :icon="Plus" @click="$router.push('/departments/new')">新增部门</el-button>
+        <el-button v-if="auth.isAdmin || auth.isManager" :icon="List" @click="$router.push('/employees')">员工列表</el-button>
         <el-button :icon="List" @click="$router.push('/departments')">部门列表</el-button>
+        <el-button v-if="auth.isStaff" :icon="User" @click="$router.push('/employees/me')">个人档案</el-button>
         <el-button v-if="auth.isAdmin" :icon="Setting" type="warning" @click="$router.push('/users')">用户管理</el-button>
-        <el-button :icon="Money" @click="$router.push('/salary/structures')">薪资结构</el-button>
-        <el-button :icon="Money" @click="$router.push('/salary/records')">薪资记录</el-button>
+        <el-button v-if="auth.isAdmin" :icon="Money" @click="$router.push('/salary/structures')">薪资结构</el-button>
+        <el-button v-if="auth.isAdmin" :icon="Money" @click="$router.push('/salary/records')">薪资记录</el-button>
+        <el-button :icon="Clock" @click="$router.push('/attendance')">考勤管理</el-button>
+        <el-button :icon="Calendar" @click="$router.push('/leaves')">请假管理</el-button>
+        <el-button v-if="auth.isAdmin" :icon="Document" @click="$router.push('/audit-logs')">审计日志</el-button>
       </el-space>
     </el-card>
   </div>

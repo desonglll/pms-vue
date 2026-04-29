@@ -5,10 +5,12 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus, Delete } from '@element-plus/icons-vue'
 import { useEmployeeStore } from '@/stores/employees'
 import { useDepartmentStore } from '@/stores/departments'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const employeeStore = useEmployeeStore()
 const departmentStore = useDepartmentStore()
+const auth = useAuthStore()
 
 const keyword = ref('')
 const sortField = ref('')
@@ -25,6 +27,7 @@ const sortOptions = [
 ]
 
 const hasSelection = computed(() => selectedIds.value.length > 0)
+const canEdit = computed(() => auth.isAdmin || auth.isManager)
 
 onMounted(() => {
   departmentStore.fetchAllForSelect()
@@ -117,10 +120,10 @@ async function handleBatchDelete() {
           <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
         </el-col>
         <el-col :span="7" style="text-align: right">
-          <el-button type="danger" :icon="Delete" :disabled="!hasSelection" @click="handleBatchDelete">
+          <el-button v-if="auth.isAdmin" type="danger" :icon="Delete" :disabled="!hasSelection" @click="handleBatchDelete">
             批量删除{{ hasSelection ? `(${selectedIds.length})` : '' }}
           </el-button>
-          <el-button type="primary" :icon="Plus" @click="handleAdd">新增员工</el-button>
+          <el-button v-if="canEdit" type="primary" :icon="Plus" @click="handleAdd">新增员工</el-button>
         </el-col>
       </el-row>
     </el-card>
@@ -133,7 +136,7 @@ async function handleBatchDelete() {
         border
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="45" align="center" />
+        <el-table-column v-if="auth.isAdmin" type="selection" width="45" align="center" />
         <el-table-column prop="id" label="ID" width="70" align="center" />
         <el-table-column prop="name" label="姓名" width="100" />
         <el-table-column prop="email" label="邮箱" min-width="160" />
@@ -150,12 +153,16 @@ async function handleBatchDelete() {
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="created_by" label="创建人" width="90" />
-        <el-table-column prop="updated_by" label="更新人" width="90" />
+        <el-table-column v-if="auth.isAdmin" label="关联用户" width="100">
+          <template #default="{ row }">
+            {{ row.user_id ? `User#${row.user_id}` : '-' }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="150" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" type="primary" link @click="handleEdit(row.id)">编辑</el-button>
-            <el-button size="small" type="danger" link @click="handleDeleteOne(row.id)">删除</el-button>
+            <el-button size="small" link @click="router.push({ name: 'employee-detail', params: { id: row.id } })">查看</el-button>
+            <el-button v-if="canEdit" size="small" type="primary" link @click="handleEdit(row.id)">编辑</el-button>
+            <el-button v-if="auth.isAdmin" size="small" type="danger" link @click="handleDeleteOne(row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

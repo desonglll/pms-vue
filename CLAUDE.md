@@ -37,29 +37,32 @@
 
 ## 认证流程
 
-- 登录：`POST /auth/login` → 返回 `{ token }`（不再返回 user）
-- 登录后立即调 `GET /auth/me` 获取用户信息（含 roles）
+- 登录：`POST /auth/login` → 返回 `{ token }`
+- 登录后解码 JWT 提取 `role` 和 `employee_id`，存入 Pinia 全局状态
+- 同时调 `GET /auth/me` 获取用户详细信息
 - token 存 localStorage，Axios 拦截器自动加 `Authorization: Bearer <token>`
-- 路由守卫：未登录跳转 `/login`，admin 路由非 admin 跳转首页
+- 路由守卫：未登录跳转 `/login`，按 `meta.roles` 控制页面访问
 - 401 响应：拦截器自动清 token 并跳转登录页
+- 403 响应：拦截器提示"权限不足"
 - 种子账号：`admin / admin123`
 
-## 权限模型
+## 权限模型（RBAC）
 
 | 角色 | 权限 |
 |------|------|
-| admin | 所有操作 + 用户管理 |
-| manager | 员工/部门增删改查 |
-| staff | 员工/部门只读 |
+| admin | 所有操作 + 用户管理 + 薪资管理 + 审计日志 |
+| manager | 员工/部门增删改查（本部门范围）+ 请假审批 + 考勤管理 |
+| staff | 考勤打卡（仅自己）+ 请假（仅自己）+ 个人档案 + 部门只读 |
 
-前端通过 `auth.isAdmin` 控制用户管理菜单可见性，路由 `meta.admin` 控制页面访问。
+前端通过 `auth.role` 控制菜单和按钮可见性，路由 `meta.roles` 控制页面访问。
+`auth.isAdmin`/`auth.isManager`/`auth.isStaff` 为便捷判断，`auth.employeeId` 获取关联员工 ID。
 
 ## 布局
 
 顶部导航栏布局：
-- 左侧：logo + 横向菜单（首页/员工/部门/用户管理-仅admin）
-- 右侧：用户名 + 角色标签(管理员) + 退出
-- 下方：浅灰背景 `#f0f2f5`，router-view
+- 左侧边栏：logo + 纵向菜单（首页/员工/部门/薪资/考勤/请假/用户管理-仅admin），支持折叠/展开
+- 顶部栏：折叠按钮 + 用户名 + 角色标签(管理员) + 退出
+- 主内容区：浅灰背景 `#f0f2f5`，router-view
 - 列表页统一：搜索筛选区（el-card）+ 多选表格 + 分页（el-card）
 - 表单页统一：el-page-header 返回 + 标题，el-card 内表单
 
@@ -68,16 +71,20 @@
 ```
 src/
 ├── api/            # Axios 封装，每个模块一个文件
-│   ├── index.ts    # 实例 + JWT/错误拦截器
+│   ├── index.ts    # 实例 + JWT/错误拦截器（含 403 权限提示）
 │   ├── auth.ts
 │   ├── employees.ts
 │   ├── departments.ts
+│   ├── salary.ts
+│   ├── attendance.ts
+│   ├── leave.ts
+│   ├── audit.ts
 │   ├── users.ts
 │   └── roles.ts
-├── router/         # 路由 + 登录守卫 + admin 守卫
-├── stores/         # Pinia 状态（auth/employees/departments/users/roles）
-├── views/          # 页面组件（auth/dashboard/employees/departments/users）
-├── types/          # TypeScript 类型定义
+├── router/         # 路由 + 登录守卫 + RBAC 角色守卫
+├── stores/         # Pinia 状态（auth/employees/departments/salary/attendance/leave/audit/users/roles）
+├── views/          # 页面组件（auth/dashboard/employees/departments/salary/attendance/leave/audit/users）
+├── types/          # TypeScript 类型定义（含 JwtPayload、RBAC 类型）
 └── assets/
 ```
 

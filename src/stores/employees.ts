@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Employee, EmployeeForm, ListQuery, ListResult } from '@/types'
+import type { Employee, EmployeeForm, ListQuery } from '@/types'
 import * as api from '@/api/employees'
 
 export const useEmployeeStore = defineStore('employees', () => {
@@ -8,18 +8,15 @@ export const useEmployeeStore = defineStore('employees', () => {
   const total = ref(0)
   const page = ref(1)
   const pageSize = ref(10)
-  const totalPages = ref(0)
   const loading = ref(false)
   const query = ref<ListQuery>({})
 
   async function fetchAll() {
     loading.value = true
     try {
-      const { data } = await api.getEmployees({ ...query.value, page: page.value, page_size: pageSize.value })
-      const result = data as unknown as ListResult<Employee>
+      const { data: result } = await api.getEmployees({ ...query.value, page: page.value, page_size: pageSize.value })
       employees.value = result.data
       total.value = result.total
-      totalPages.value = result.total_pages
     } finally {
       loading.value = false
     }
@@ -57,7 +54,7 @@ export const useEmployeeStore = defineStore('employees', () => {
   }
 
   return {
-    employees, total, page, pageSize, totalPages, loading, query,
+    employees, total, page, pageSize, loading, query,
     fetchAll, fetchOne, create, update, remove,
     setQuery, setPage, setPageSize,
   }

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Delete } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/users'
 import { useRoleStore } from '@/stores/roles'
 import type { User } from '@/types'
 
+const router = useRouter()
 const userStore = useUserStore()
 const roleStore = useRoleStore()
 
@@ -22,7 +24,7 @@ const filteredUsers = computed(() => {
   return userStore.users.filter(
     (u) =>
       u.username.toLowerCase().includes(kw) ||
-      u.roles?.some((r) => r.name.toLowerCase().includes(kw) || r.description.includes(kw)),
+      u.roles?.some((r) => r.name.toLowerCase().includes(kw) || (r.description && r.description.toLowerCase().includes(kw))),
   )
 })
 
@@ -40,8 +42,8 @@ function formatRoles(user: User): string {
 }
 
 async function handleToggleStatus(user: User) {
-  const newStatus = user.status === 'active' ? 'disabled' : 'active'
-  const label = newStatus === 'disabled' ? '禁用' : '启用'
+  const newStatus = user.status === 'active' ? 'inactive' : 'active'
+  const label = newStatus === 'inactive' ? '禁用' : '启用'
   await ElMessageBox.confirm(`确认${label}用户 ${user.username}？`, '提示', { type: 'warning' })
   await userStore.updateStatus(user.id, newStatus)
   ElMessage.success(`${label}成功`)
@@ -66,7 +68,7 @@ async function handleRoleSubmit() {
 async function handleBatchDisable() {
   await ElMessageBox.confirm(`确认禁用选中的 ${selectedIds.value.length} 个用户？`, '批量禁用', { type: 'warning' })
   for (const id of selectedIds.value) {
-    await userStore.updateStatus(id, 'disabled')
+    await userStore.updateStatus(id, 'inactive')
   }
   ElMessage.success('批量禁用成功')
   userStore.fetchAll()
@@ -117,8 +119,9 @@ async function handleBatchDisable() {
           </template>
         </el-table-column>
         <el-table-column prop="created_at" label="创建时间" width="170" />
-        <el-table-column label="操作" width="200" align="center">
+        <el-table-column label="操作" width="300" align="center">
           <template #default="{ row }">
+            <el-button size="small" link @click="router.push({ name: 'user-detail', params: { id: row.id } })">查看</el-button>
             <el-button size="small" type="primary" link @click="handleAssignRoles(row)">分配角色</el-button>
             <el-button
               size="small"

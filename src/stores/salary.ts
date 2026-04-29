@@ -1,33 +1,45 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { SalaryStructure, SalaryStructureForm, SalaryRecord, SalaryRecordForm, ListQuery, ListResult } from '@/types'
+import type {
+  SalaryStructure,
+  SalaryStructureForm,
+  SalaryRecord,
+  SalaryRecordForm,
+  SalaryRecordBatchForm,
+  SalaryRecordListQuery,
+} from '@/types'
 import * as api from '@/api/salary'
 
 export const useSalaryStore = defineStore('salary', () => {
-  // 薪资结构
+  // Structures
   const structures = ref<SalaryStructure[]>([])
   const structTotal = ref(0)
   const structPage = ref(1)
   const structPageSize = ref(10)
-  const structTotalPages = ref(0)
-  const structLoading = ref(false)
-  const structQuery = ref<ListQuery>({})
+
+  // Records
+  const records = ref<SalaryRecord[]>([])
+  const recordTotal = ref(0)
+  const recordPage = ref(1)
+  const recordPageSize = ref(10)
+  const recordQuery = ref<SalaryRecordListQuery>({})
+  const loading = ref(false)
+
+  // ---- Structures ----
 
   async function fetchStructures() {
-    structLoading.value = true
+    loading.value = true
     try {
-      const { data } = await api.getSalaryStructures({ ...structQuery.value, page: structPage.value, page_size: structPageSize.value })
-      const result = data as unknown as ListResult<SalaryStructure>
+      const { data: result } = await api.getSalaryStructures({ page: structPage.value, page_size: structPageSize.value })
       structures.value = result.data
       structTotal.value = result.total
-      structTotalPages.value = result.total_pages
     } finally {
-      structLoading.value = false
+      loading.value = false
     }
   }
 
-  async function fetchStructureByEmployee(empId: number) {
-    const { data } = await api.getSalaryStructureByEmployee(empId)
+  async function fetchStructure(id: number) {
+    const { data } = await api.getSalaryStructure(id)
     return data
   }
 
@@ -35,7 +47,7 @@ export const useSalaryStore = defineStore('salary', () => {
     await api.createSalaryStructure(form)
   }
 
-  async function updateStructure(id: number, form: Record<string, unknown>) {
+  async function updateStructure(id: number, form: SalaryStructureForm) {
     await api.updateSalaryStructure(id, form)
   }
 
@@ -43,49 +55,32 @@ export const useSalaryStore = defineStore('salary', () => {
     await api.deleteSalaryStructure(id)
   }
 
-  function setStructQuery(q: Partial<ListQuery>) {
-    structQuery.value = { ...structQuery.value, ...q }
-    structPage.value = 1
-  }
-
   function setStructPage(p: number) {
     structPage.value = p
   }
 
-  function setStructPageSize(size: number) {
-    structPageSize.value = size
-    structPage.value = 1
+  function setStructPageSize(s: number) {
+    structPageSize.value = s
   }
 
-  // 薪资记录
-  const records = ref<SalaryRecord[]>([])
-  const recordTotal = ref(0)
-  const recordPage = ref(1)
-  const recordPageSize = ref(10)
-  const recordTotalPages = ref(0)
-  const recordLoading = ref(false)
-  const recordQuery = ref<ListQuery>({})
-  const recordFilters = ref<Record<string, unknown>>({})
+  // ---- Records ----
 
   async function fetchRecords() {
-    recordLoading.value = true
+    loading.value = true
     try {
-      const { data } = await api.getSalaryRecords({
-        ...recordQuery.value,
-        ...recordFilters.value,
+      const { data: result } = await api.getSalaryRecords({
         page: recordPage.value,
         page_size: recordPageSize.value,
+        ...recordQuery.value,
       })
-      const result = data as unknown as ListResult<SalaryRecord>
       records.value = result.data
       recordTotal.value = result.total
-      recordTotalPages.value = result.total_pages
     } finally {
-      recordLoading.value = false
+      loading.value = false
     }
   }
 
-  async function fetchOneRecord(id: number) {
+  async function fetchRecord(id: number) {
     const { data } = await api.getSalaryRecord(id)
     return data
   }
@@ -94,36 +89,51 @@ export const useSalaryStore = defineStore('salary', () => {
     await api.createSalaryRecord(form)
   }
 
-  function setRecordQuery(q: Partial<ListQuery>) {
-    recordQuery.value = { ...recordQuery.value, ...q }
-    recordPage.value = 1
+  async function updateRecord(id: number, data: { performance_factor?: number }) {
+    await api.updateSalaryRecord(id, data)
   }
 
-  function setRecordFilters(f: Record<string, unknown>) {
-    recordFilters.value = { ...recordFilters.value, ...f }
-    recordPage.value = 1
+  async function deleteRecord(id: number) {
+    await api.deleteSalaryRecord(id)
   }
 
-  function clearRecordFilters() {
-    recordFilters.value = {}
-    recordPage.value = 1
+  async function submitRecord(id: number) {
+    await api.submitSalaryRecord(id)
+  }
+
+  async function approveRecord(id: number) {
+    await api.approveSalaryRecord(id)
+  }
+
+  async function rejectRecord(id: number) {
+    await api.rejectSalaryRecord(id)
+  }
+
+  async function payRecord(id: number) {
+    await api.paySalaryRecord(id)
+  }
+
+  async function batchGenerate(form: SalaryRecordBatchForm) {
+    await api.batchGenerateSalaryRecords(form)
   }
 
   function setRecordPage(p: number) {
     recordPage.value = p
   }
 
-  function setRecordPageSize(size: number) {
-    recordPageSize.value = size
-    recordPage.value = 1
+  function setRecordPageSize(s: number) {
+    recordPageSize.value = s
+  }
+
+  function setRecordQuery(q: SalaryRecordListQuery) {
+    recordQuery.value = q
   }
 
   return {
-    structures, structTotal, structPage, structPageSize, structTotalPages, structLoading, structQuery,
-    fetchStructures, fetchStructureByEmployee, createStructure, updateStructure, deleteStructure,
-    setStructQuery, setStructPage, setStructPageSize,
-    records, recordTotal, recordPage, recordPageSize, recordTotalPages, recordLoading, recordQuery, recordFilters,
-    fetchRecords, fetchOneRecord, createRecord,
-    setRecordQuery, setRecordFilters, clearRecordFilters, setRecordPage, setRecordPageSize,
+    structures, structTotal, structPage, structPageSize,
+    records, recordTotal, recordPage, recordPageSize, recordQuery, loading,
+    fetchStructures, fetchStructure, createStructure, updateStructure, deleteStructure, setStructPage, setStructPageSize,
+    fetchRecords, fetchRecord, createRecord, updateRecord, deleteRecord, setRecordPage, setRecordPageSize, setRecordQuery,
+    submitRecord, approveRecord, rejectRecord, payRecord, batchGenerate,
   }
 })

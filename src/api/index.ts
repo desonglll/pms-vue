@@ -27,10 +27,13 @@ http.interceptors.response.use(
     return { ...res, data: body.data }
   },
   (err) => {
-    if (err.response?.status === 401) {
+    const status = err.response?.status
+    if (status === 401) {
       const auth = useAuthStore()
       auth.logout()
       router.push({ name: 'login' })
+    } else if (status === 403) {
+      ElMessage.error('权限不足')
     } else {
       const msg = err.response?.data?.message || err.message || '请求失败'
       ElMessage.error(msg)

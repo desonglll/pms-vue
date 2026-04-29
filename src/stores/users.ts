@@ -25,5 +25,9 @@ export const useUserStore = defineStore('users', () => {
     await api.assignRoles(id, roleIds)
   }
 
-  return { users, loading, fetchAll, updateStatus, assignRoles }
+  async function updatePassword(id: number, password: string) {
+    await api.updateUserPassword(id, password)
+  }
+
+  return { users, loading, fetchAll, updateStatus, assignRoles, updatePassword }
 })

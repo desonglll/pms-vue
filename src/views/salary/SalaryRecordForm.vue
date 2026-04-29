@@ -1,20 +1,23 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useSalaryStore } from '@/stores/salary'
 import { useEmployeeStore } from '@/stores/employees'
 import type { SalaryRecordForm } from '@/types'
 
+const route = useRoute()
 const router = useRouter()
 const salaryStore = useSalaryStore()
 const employeeStore = useEmployeeStore()
 
+const isEdit = computed(() => route.name === 'salary-record-edit')
 const formRef = ref()
 const loading = ref(false)
 
 const form = ref<SalaryRecordForm>({
-  employee_id: undefined,
+  employee_id: undefined as unknown as number,
+  structure_id: undefined as unknown as number,
   year: new Date().getFullYear(),
   month: new Date().getMonth() + 1,
   performance_factor: 1,
@@ -22,23 +25,49 @@ const form = ref<SalaryRecordForm>({
 
 const rules = {
   employee_id: [{ required: true, message: '请选择员工', trigger: 'change' }],
+  structure_id: [{ required: true, message: '请选择薪资结构', trigger: 'change' }],
   year: [{ required: true, message: '请输入年份', trigger: 'blur' }],
-  month: [{ required: true, message: '请选择月份', trigger: 'change' }],
+  month: [{ required: true, message: '请输入月份', trigger: 'blur' }],
 }
 
 onMounted(async () => {
   await employeeStore.fetchAll()
+  await salaryStore.fetchStructures()
+  if (isEdit.value) {
+    const id = Number(route.params.id)
+    loading.value = true
+    try {
+      const data = await salaryStore.fetchRecord(id) as any
+      if (data) {
+        form.value = {
+          employee_id: data.employee_id,
+          structure_id: data.structure_id,
+          year: data.year,
+          month: data.month,
+          performance_factor: data.performance_factor,
+        }
+      }
+    } finally {
+      loading.value = false
+    }
+  }
 })
 
 async function handleSubmit() {
   await formRef.value.validate()
   loading.value = true
   try {
-    await salaryStore.createRecord(form.value)
-    ElMessage.success('创建成功')
+    if (isEdit.value) {
+      await salaryStore.updateRecord(Number(route.params.id), {
+        performance_factor: form.value.performance_factor,
+      })
+    } else {
+      await salaryStore.createRecord(form.value)
+    }
+    ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
     router.push({ name: 'salary-record-list' })
   } catch {
-    // 拦截器已弹出错误提示
+    // interceptor handles error
   } finally {
     loading.value = false
   }
@@ -49,39 +78,40 @@ async function handleSubmit() {
   <div>
     <el-page-header title="返回" @back="router.back()" style="margin-bottom: 16px">
       <template #content>
-        <span style="font-size: 16px; font-weight: 600">新增薪资记录</span>
+        <span style="font-size: 16px; font-weight: 600">{{ isEdit ? '编辑薪资记录' : '新增薪资记录' }}</span>
       </template>
     </el-page-header>
 
     <el-card v-loading="loading">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="max-width: 600px">
         <el-form-item label="员工" prop="employee_id">
-          <el-select v-model="form.employee_id" placeholder="请选择员工" filterable style="width: 100%">
-            <el-option
-              v-for="emp in employeeStore.employees"
-              :key="emp.id"
-              :label="`${emp.name} (${emp.email})`"
-              :value="emp.id"
-            />
+          <el-select v-model="form.employee_id" placeholder="请选择员工" filterable style="width: 100%" :disabled="isEdit">
+            <el-option v-for="emp in employeeStore.employees" :key="emp.id" :label="`${emp.name} (${emp.email})`" :value="emp.id" />
           </el-select>
         </el-form-item>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="年份" prop="year">
-              <el-input-number v-model="form.year" :min="2000" :max="2100" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="月份" prop="month">
-              <el-select v-model="form.month" style="width: 100%">
-                <el-option v-for="m in 12" :key="m" :label="`${m}月`" :value="m" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
+
+        <el-form-item label="薪资结构" prop="structure_id">
+          <el-select v-model="form.structure_id" placeholder="请选择薪资结构" style="width: 100%" :disabled="isEdit">
+            <el-option v-for="s in salaryStore.structures" :key="s.id" :label="`#${s.id} ${s.employee?.name || ''}`" :value="s.id" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="年份" prop="year">
+          <el-input-number v-model="form.year" :min="2020" :max="2099" style="width: 100%" :disabled="isEdit" />
+        </el-form-item>
+
+        <el-form-item label="月份" prop="month">
+          <el-input-number v-model="form.month" :min="1" :max="12" style="width: 100%" :disabled="isEdit" />
+        </el-form-item>
+
         <el-form-item label="绩效系数">
           <el-input-number v-model="form.performance_factor" :min="0" :max="10" :step="0.1" :precision="2" style="width: 100%" />
         </el-form-item>
+
+        <el-form-item v-if="isEdit" label="提示">
+          <span style="color: #909399; font-size: 12px">修改绩效系数后，后端会自动重算应发工资</span>
+        </el-form-item>
+
         <el-form-item>
           <el-button type="primary" @click="handleSubmit" :loading="loading">提交</el-button>
           <el-button @click="router.back()">取消</el-button>
