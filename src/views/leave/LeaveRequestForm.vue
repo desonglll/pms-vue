@@ -30,7 +30,6 @@ const rules = {
   type: [{ required: true, message: '请选择请假类型', trigger: 'change' }],
   start_date: [{ required: true, message: '请选择开始日期', trigger: 'change' }],
   end_date: [{ required: true, message: '请选择结束日期', trigger: 'change' }],
-  reason: [{ required: true, message: '请输入请假原因', trigger: 'blur' }],
 }
 
 const typeOptions: { label: string; value: LeaveType }[] = [
@@ -41,7 +40,7 @@ const typeOptions: { label: string; value: LeaveType }[] = [
 
 onMounted(async () => {
   if (!isStaff.value) {
-    await employeeStore.fetchAll()
+    await employeeStore.fetchAllForSelect()
   }
   if (isStaff.value && auth.employeeId) {
     form.value.employee_id = auth.employeeId
@@ -75,7 +74,7 @@ async function handleSubmit() {
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="max-width: 600px">
         <el-form-item label="员工" prop="employee_id">
           <el-select v-model="form.employee_id" placeholder="请选择员工" filterable style="width: 100%" :disabled="isStaff">
-            <el-option v-for="emp in employeeStore.employees" :key="emp.id" :label="`${emp.name} (${emp.email})`" :value="emp.id" />
+            <el-option v-for="emp in employeeStore.allEmployees" :key="emp.id" :label="`${emp.name} (${emp.email})`" :value="emp.id" />
           </el-select>
         </el-form-item>
 

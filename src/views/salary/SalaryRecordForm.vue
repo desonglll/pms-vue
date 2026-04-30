@@ -17,7 +17,6 @@ const loading = ref(false)
 
 const form = ref<SalaryRecordForm>({
   employee_id: undefined as unknown as number,
-  structure_id: undefined as unknown as number,
   year: new Date().getFullYear(),
   month: new Date().getMonth() + 1,
   performance_factor: 1,
@@ -25,14 +24,12 @@ const form = ref<SalaryRecordForm>({
 
 const rules = {
   employee_id: [{ required: true, message: '请选择员工', trigger: 'change' }],
-  structure_id: [{ required: true, message: '请选择薪资结构', trigger: 'change' }],
   year: [{ required: true, message: '请输入年份', trigger: 'blur' }],
   month: [{ required: true, message: '请输入月份', trigger: 'blur' }],
 }
 
 onMounted(async () => {
-  await employeeStore.fetchAll()
-  await salaryStore.fetchStructures()
+  await employeeStore.fetchAllForSelect()
   if (isEdit.value) {
     const id = Number(route.params.id)
     loading.value = true
@@ -41,7 +38,6 @@ onMounted(async () => {
       if (data) {
         form.value = {
           employee_id: data.employee_id,
-          structure_id: data.structure_id,
           year: data.year,
           month: data.month,
           performance_factor: data.performance_factor,
@@ -86,13 +82,7 @@ async function handleSubmit() {
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="max-width: 600px">
         <el-form-item label="员工" prop="employee_id">
           <el-select v-model="form.employee_id" placeholder="请选择员工" filterable style="width: 100%" :disabled="isEdit">
-            <el-option v-for="emp in employeeStore.employees" :key="emp.id" :label="`${emp.name} (${emp.email})`" :value="emp.id" />
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="薪资结构" prop="structure_id">
-          <el-select v-model="form.structure_id" placeholder="请选择薪资结构" style="width: 100%" :disabled="isEdit">
-            <el-option v-for="s in salaryStore.structures" :key="s.id" :label="`#${s.id} ${s.employee?.name || ''}`" :value="s.id" />
+            <el-option v-for="emp in employeeStore.allEmployees" :key="emp.id" :label="`${emp.name} (${emp.email})`" :value="emp.id" />
           </el-select>
         </el-form-item>
 

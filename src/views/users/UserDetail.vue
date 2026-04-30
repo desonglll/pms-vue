@@ -25,10 +25,10 @@ const newPassword = ref('')
 async function loadUser(id: number) {
   loading.value = true
   try {
-    if (userStore.users.length === 0) {
-      await userStore.fetchAll()
-    }
-    user.value = userStore.users.find(u => u.id === id) ?? null
+    const data = await userStore.fetchOne(id) as any
+    user.value = data
+  } catch {
+    user.value = null
   } finally {
     loading.value = false
   }
@@ -57,14 +57,22 @@ function formatDate(dt: string | null | undefined) {
 
 async function handleToggleStatus() {
   if (!user.value) return
-  const newStatus = user.value.status === 'active' ? 'inactive' : 'active'
-  const action = newStatus === 'inactive' ? '禁用' : '启用'
+  const newStatus = user.value.status === 'active' ? 'disabled' : 'active'
+  const action = newStatus === 'disabled' ? '禁用' : '启用'
   try {
     await ElMessageBox.confirm(`确认${action}该用户？`, '提示', { type: 'warning' })
     await userStore.updateStatus(user.value.id, newStatus)
     ElMessage.success(`已${action}`)
     user.value = { ...user.value, status: newStatus }
   } catch { /* cancelled or error */ }
+}
+
+async function handleDelete() {
+  if (!user.value) return
+  await ElMessageBox.confirm(`确认删除用户 ${user.value.username}？`, '提示', { type: 'warning' })
+  await userStore.remove(user.value.id)
+  ElMessage.success('删除成功')
+  router.push({ name: 'user-list' })
 }
 
 function openRoleDialog() {
@@ -81,8 +89,7 @@ async function handleAssignRoles() {
     await userStore.assignRoles(user.value.id, selectedRoleIds.value)
     ElMessage.success('角色分配成功')
     roleDialogVisible.value = false
-    await userStore.fetchAll()
-    user.value = userStore.users.find(u => u.id === user.value!.id) ?? null
+    loadUser(user.value.id)
   } catch {
     // interceptor handles error
   } finally {
@@ -126,6 +133,7 @@ async function handleResetPassword() {
         <el-button :type="user?.status === 'active' ? 'danger' : 'success'" @click="handleToggleStatus">
           {{ user?.status === 'active' ? '禁用' : '启用' }}
         </el-button>
+        <el-button type="danger" @click="handleDelete">删除</el-button>
       </template>
     </el-page-header>
 

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { AttendanceRecord, AttendanceSummary, AttendanceRecordListQuery, AttendanceSummaryGenerateForm } from '@/types'
+import type { AttendanceRecord, AttendanceSummary, AttendanceRecordListQuery, AttendanceSummaryListQuery, AttendanceSummaryGenerateForm } from '@/types'
 import * as api from '@/api/attendance'
 
 export const useAttendanceStore = defineStore('attendance', () => {
@@ -15,6 +15,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
   const summaryTotal = ref(0)
   const summaryPage = ref(1)
   const summaryPageSize = ref(10)
+  const summaryQuery = ref<AttendanceSummaryListQuery>({})
 
   async function fetchRecords() {
     loading.value = true
@@ -43,12 +44,21 @@ export const useAttendanceStore = defineStore('attendance', () => {
     await api.generateAttendanceSummary(form)
   }
 
+  async function deleteRecord(id: number) {
+    await api.deleteAttendanceRecord(id)
+  }
+
+  async function batchDeleteRecords(ids: number[]) {
+    await api.batchDeleteAttendanceRecords(ids)
+  }
+
   async function fetchSummaries() {
     loading.value = true
     try {
       const { data: result } = await api.getAttendanceSummaries({
         page: summaryPage.value,
         page_size: summaryPageSize.value,
+        ...summaryQuery.value,
       })
       summaries.value = result.data
       summaryTotal.value = result.total
@@ -77,10 +87,14 @@ export const useAttendanceStore = defineStore('attendance', () => {
     summaryPageSize.value = s
   }
 
+  function setSummaryQuery(q: AttendanceSummaryListQuery) {
+    summaryQuery.value = q
+  }
+
   return {
     records, recordTotal, recordPage, recordPageSize, recordQuery, loading,
-    summaries, summaryTotal, summaryPage, summaryPageSize,
-    fetchRecords, clockIn, clockOut, generateSummary, fetchSummaries,
-    setRecordQuery, setRecordPage, setRecordPageSize, setSummaryPage, setSummaryPageSize,
+    summaries, summaryTotal, summaryPage, summaryPageSize, summaryQuery,
+    fetchRecords, clockIn, clockOut, generateSummary, deleteRecord, batchDeleteRecords, fetchSummaries,
+    setRecordQuery, setRecordPage, setRecordPageSize, setSummaryPage, setSummaryPageSize, setSummaryQuery,
   }
 })

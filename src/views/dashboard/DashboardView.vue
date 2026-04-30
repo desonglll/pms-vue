@@ -30,7 +30,7 @@ onMounted(async () => {
   if (auth.isAdmin) {
     try {
       await userStore.fetchAll()
-      userTotal.value = userStore.users.length
+      userTotal.value = userStore.total
     } catch { /* ignore */ }
     try {
       await salaryStore.fetchStructures()

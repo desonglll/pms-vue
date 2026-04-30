@@ -54,7 +54,7 @@ const deptTreeData = computed(() => {
 onMounted(async () => {
   await departmentStore.fetchAllForSelect()
   if (auth.isAdmin) {
-    await userStore.fetchAll()
+    await userStore.fetchAllForSelect()
   }
   if (isEdit.value) {
     const id = Number(route.params.id)
@@ -139,7 +139,7 @@ async function handleSubmit() {
 
         <el-form-item v-if="auth.isAdmin" label="关联用户">
           <el-select v-model="form.user_id" placeholder="关联登录账号（可选）" filterable clearable style="width: 100%">
-            <el-option v-for="u in userStore.users" :key="u.id" :label="u.username" :value="u.id" />
+            <el-option v-for="u in userStore.allUsers" :key="u.id" :label="u.username" :value="u.id" />
           </el-select>
         </el-form-item>
 

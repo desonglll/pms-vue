@@ -10,6 +10,7 @@ export const useEmployeeStore = defineStore('employees', () => {
   const pageSize = ref(10)
   const loading = ref(false)
   const query = ref<ListQuery>({})
+  const allEmployees = ref<Employee[]>([])
 
   async function fetchAll() {
     loading.value = true
@@ -20,6 +21,11 @@ export const useEmployeeStore = defineStore('employees', () => {
     } finally {
       loading.value = false
     }
+  }
+
+  async function fetchAllForSelect() {
+    const { data: result } = await api.getEmployees({ page: 1, page_size: 999 })
+    allEmployees.value = result.data
   }
 
   async function fetchOne(id: number) {
@@ -54,8 +60,8 @@ export const useEmployeeStore = defineStore('employees', () => {
   }
 
   return {
-    employees, total, page, pageSize, loading, query,
-    fetchAll, fetchOne, create, update, remove,
+    employees, total, page, pageSize, loading, query, allEmployees,
+    fetchAll, fetchAllForSelect, fetchOne, create, update, remove,
     setQuery, setPage, setPageSize,
   }
 })

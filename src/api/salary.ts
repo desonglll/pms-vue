@@ -6,17 +6,22 @@ import type {
   SalaryRecordForm,
   SalaryRecordBatchForm,
   SalaryRecordListQuery,
+  ListQuery,
   ListResult,
 } from '@/types'
 
 // ---- Structures ----
 
-export function getSalaryStructures(params?: { page?: number; page_size?: number }) {
+export function getSalaryStructures(params?: ListQuery) {
   return http.get<ListResult<SalaryStructure>>('/salaries/structures', { params })
 }
 
 export function getSalaryStructure(id: number) {
   return http.get<SalaryStructure>(`/salaries/structures/${id}`)
+}
+
+export function getSalaryStructureByEmployee(empId: number) {
+  return http.get<SalaryStructure>(`/salaries/structures/employees/${empId}`)
 }
 
 export function createSalaryStructure(data: SalaryStructureForm) {
@@ -42,7 +47,8 @@ export function getSalaryRecord(id: number) {
 }
 
 export function createSalaryRecord(data: SalaryRecordForm) {
-  return http.post<SalaryRecord>('/salaries/records', data)
+  const { employee_id, year, month, performance_factor } = data
+  return http.post<SalaryRecord>('/salaries/records', { employee_id, year, month, performance_factor })
 }
 
 export function updateSalaryRecord(id: number, data: { performance_factor?: number }) {

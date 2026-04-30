@@ -7,6 +7,7 @@ import type {
   SalaryRecordForm,
   SalaryRecordBatchForm,
   SalaryRecordListQuery,
+  ListQuery,
 } from '@/types'
 import * as api from '@/api/salary'
 
@@ -16,6 +17,7 @@ export const useSalaryStore = defineStore('salary', () => {
   const structTotal = ref(0)
   const structPage = ref(1)
   const structPageSize = ref(10)
+  const structQuery = ref<ListQuery>({})
 
   // Records
   const records = ref<SalaryRecord[]>([])
@@ -30,7 +32,11 @@ export const useSalaryStore = defineStore('salary', () => {
   async function fetchStructures() {
     loading.value = true
     try {
-      const { data: result } = await api.getSalaryStructures({ page: structPage.value, page_size: structPageSize.value })
+      const { data: result } = await api.getSalaryStructures({
+        page: structPage.value,
+        page_size: structPageSize.value,
+        ...structQuery.value,
+      })
       structures.value = result.data
       structTotal.value = result.total
     } finally {
@@ -61,6 +67,10 @@ export const useSalaryStore = defineStore('salary', () => {
 
   function setStructPageSize(s: number) {
     structPageSize.value = s
+  }
+
+  function setStructQuery(q: ListQuery) {
+    structQuery.value = q
   }
 
   // ---- Records ----
@@ -130,9 +140,9 @@ export const useSalaryStore = defineStore('salary', () => {
   }
 
   return {
-    structures, structTotal, structPage, structPageSize,
+    structures, structTotal, structPage, structPageSize, structQuery,
     records, recordTotal, recordPage, recordPageSize, recordQuery, loading,
-    fetchStructures, fetchStructure, createStructure, updateStructure, deleteStructure, setStructPage, setStructPageSize,
+    fetchStructures, fetchStructure, createStructure, updateStructure, deleteStructure, setStructPage, setStructPageSize, setStructQuery,
     fetchRecords, fetchRecord, createRecord, updateRecord, deleteRecord, setRecordPage, setRecordPageSize, setRecordQuery,
     submitRecord, approveRecord, rejectRecord, payRecord, batchGenerate,
   }

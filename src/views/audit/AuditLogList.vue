@@ -1,15 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { Search } from '@element-plus/icons-vue'
+import { ref, onMounted, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Search, Delete } from '@element-plus/icons-vue'
 import { useAuditStore } from '@/stores/audit'
-import type { AuditAction, AuditEntityType } from '@/types'
+import { useAuthStore } from '@/stores/auth'
+import type { AuditAction, AuditEntityType, AuditLog } from '@/types'
 
 const auditStore = useAuditStore()
+const auth = useAuthStore()
 
 const operator = ref('')
 const entityType = ref<AuditEntityType | ''>('')
 const startTime = ref('')
 const endTime = ref('')
+const selectedIds = ref<number[]>([])
+
+const hasSelection = computed(() => selectedIds.value.length > 0)
 
 const actionMap: Record<AuditAction, string> = {
   create: '创建',
@@ -24,6 +30,9 @@ const actionMap: Record<AuditAction, string> = {
   generate_summary: '生成统计',
   approve: '审批通过',
   reject: '审批驳回',
+  submit: '提交审核',
+  pay: '确认发放',
+  batch_create: '批量生成',
 }
 
 const entityTypeMap: Record<AuditEntityType, string> = {
@@ -42,6 +51,7 @@ const entityTypeOptions = Object.entries(entityTypeMap).map(([value, label]) => 
 onMounted(() => refresh())
 
 function refresh() {
+  selectedIds.value = []
   auditStore.setQuery({
     operator: operator.value || undefined,
     entity_type: entityType.value || undefined,
@@ -60,6 +70,17 @@ function handlePageChange(p: number) {
 function handleSizeChange(s: number) {
   auditStore.setPageSize(s)
   auditStore.fetchAll()
+}
+
+function handleSelectionChange(rows: AuditLog[]) {
+  selectedIds.value = rows.map((r) => r.id)
+}
+
+async function handleBatchDelete() {
+  await ElMessageBox.confirm(`确认删除选中的 ${selectedIds.value.length} 条审计日志？`, '批量删除', { type: 'warning' })
+  await auditStore.batchDeleteLogs(selectedIds.value)
+  ElMessage.success('批量删除成功')
+  refresh()
 }
 
 function getActionLabel(action: AuditAction) {
@@ -105,12 +126,16 @@ function formatDate(dt: string | null) {
         </el-col>
         <el-col :span="4">
           <el-button type="primary" :icon="Search" @click="refresh">搜索</el-button>
+          <el-button type="danger" :icon="Delete" :disabled="!hasSelection" @click="handleBatchDelete">
+            {{ hasSelection ? `(${selectedIds.length})` : '' }}
+          </el-button>
         </el-col>
       </el-row>
     </el-card>
 
     <el-card>
-      <el-table :data="auditStore.logs" v-loading="auditStore.loading" stripe border>
+      <el-table :data="auditStore.logs" v-loading="auditStore.loading" stripe border @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="45" align="center" />
         <el-table-column prop="id" label="ID" width="60" align="center" />
         <el-table-column label="操作时间" width="170">
           <template #default="{ row }">{{ formatDate(row.created_at) }}</template>

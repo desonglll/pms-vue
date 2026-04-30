@@ -26,6 +26,14 @@ export const useAuditStore = defineStore('audit', () => {
     }
   }
 
+  async function deleteLog(id: number) {
+    await api.deleteAuditLog(id)
+  }
+
+  async function batchDeleteLogs(ids: number[]) {
+    await api.batchDeleteAuditLogs(ids)
+  }
+
   function setPage(p: number) {
     page.value = p
   }
@@ -38,5 +46,5 @@ export const useAuditStore = defineStore('audit', () => {
     query.value = q
   }
 
-  return { logs, total, page, pageSize, query, loading, fetchAll, setPage, setPageSize, setQuery }
+  return { logs, total, page, pageSize, query, loading, fetchAll, deleteLog, batchDeleteLogs, setPage, setPageSize, setQuery }
 })

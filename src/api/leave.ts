@@ -1,7 +1,7 @@
 import http from './index'
-import type { LeaveRequest, LeaveRequestForm, ListResult, ListQuery } from '@/types'
+import type { LeaveRequest, LeaveRequestForm, LeaveRequestListQuery, ListResult } from '@/types'
 
-export function getLeaves(params?: ListQuery) {
+export function getLeaves(params?: LeaveRequestListQuery) {
   return http.get<ListResult<LeaveRequest>>('/leaves', { params })
 }
 

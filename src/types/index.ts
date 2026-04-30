@@ -91,6 +91,7 @@ export interface DepartmentForm {
 export interface Employee {
   id: number
   user_id: number | null
+  user: { id: number; username: string } | null
   name: string
   email: string
   phone: string
@@ -163,7 +164,6 @@ export interface SalaryRecord {
 
 export interface SalaryRecordForm {
   employee_id: number
-  structure_id: number
   year: number
   month: number
   performance_factor?: number
@@ -177,6 +177,9 @@ export interface SalaryRecordBatchForm {
 }
 
 export interface SalaryRecordListQuery extends ListQuery {
+  employee_id?: number
+  year?: number
+  month?: number
   status?: SalaryStatus
 }
 
@@ -202,15 +205,24 @@ export interface AttendanceSummary {
   late_days: number
   early_days: number
   absent_days: number
+  created_at: string
 }
 
 export interface AttendanceRecordListQuery extends ListQuery {
+  employee_id?: number
+  keyword?: string
   start_date?: string
   end_date?: string
 }
 
-export interface AttendanceSummaryGenerateForm {
+export interface AttendanceSummaryListQuery extends ListQuery {
   employee_id?: number
+  year?: number
+  month?: number
+}
+
+export interface AttendanceSummaryGenerateForm {
+  employee_id: number
   year: number
   month: number
 }
@@ -239,7 +251,12 @@ export interface LeaveRequestForm {
   type: LeaveType
   start_date: string
   end_date: string
-  reason: string
+  reason?: string
+}
+
+export interface LeaveRequestListQuery extends ListQuery {
+  employee_id?: number
+  status?: LeaveStatus
 }
 
 // ---- Audit Log ----
@@ -256,6 +273,9 @@ export type AuditAction =
   | 'generate_summary'
   | 'approve'
   | 'reject'
+  | 'submit'
+  | 'pay'
+  | 'batch_create'
 
 export type AuditEntityType =
   | 'employee'

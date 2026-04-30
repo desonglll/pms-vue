@@ -53,6 +53,18 @@
 - 员工/部门/用户列表新增"查看"按钮跳转详情页
 - 路由新增 /employees/:id、/departments/:id、/users/:id
 
+## 2026-04-29 #8
+
+- 用户列表适配后端分页：`GET /users` 改为返回 `ListResult`，新增搜索/分页/排序
+- 新增 `DELETE /users/:id` 接口：用户列表新增删除按钮，用户详情新增删除按钮
+- 用户状态值修正：后端使用 `disabled` 而非 `inactive`，修复切换状态时的错误值
+- 用户详情页改为通过 API 加载（`GET /users/:id`），而非搜索 store 数组
+- 员工/用户 store 新增 `fetchAllForSelect` + `allEmployees`/`allUsers`，下拉选择使用全量数据
+- 所有表单中的员工/用户下拉改用 `allEmployees`/`allUsers`，避免分页数据不全
+- Dashboard 用户总数改用 `userStore.total`（之前用 `.length` 在分页后不正确）
+- AuditAction 类型补充 `submit`/`pay`/`batch_create`，审计日志页映射补齐
+- Employee类型 `department` 不再允许 null，与后端对齐
+
 ## 2026-04-29 #7
 
 - 修复 ListResult 字段名与后端不匹配：后端用 `data` 存放列表数组，前端误用 `items`，导致所有列表页空白

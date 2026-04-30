@@ -28,7 +28,7 @@ const rules = {
 
 onMounted(async () => {
   await deptStore.fetchAllForSelect()
-  await employeeStore.fetchAll()
+  await employeeStore.fetchAllForSelect()
   if (isEdit.value) {
     const id = Number(route.params.id)
     loading.value = true
@@ -113,7 +113,7 @@ const treeData = computed(() => {
 
         <el-form-item label="部门负责人">
           <el-select v-model="form.leader_id" placeholder="选择负责人" filterable clearable style="width: 100%">
-            <el-option v-for="emp in employeeStore.employees" :key="emp.id" :label="`${emp.name} (${emp.email})`" :value="emp.id" />
+            <el-option v-for="emp in employeeStore.allEmployees" :key="emp.id" :label="`${emp.name} (${emp.email})`" :value="emp.id" />
           </el-select>
         </el-form-item>
 

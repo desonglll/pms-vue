@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { LeaveRequest, LeaveRequestForm, ListQuery } from '@/types'
+import type { LeaveRequest, LeaveRequestForm, LeaveRequestListQuery } from '@/types'
 import * as api from '@/api/leave'
 
 export const useLeaveStore = defineStore('leave', () => {
@@ -8,7 +8,7 @@ export const useLeaveStore = defineStore('leave', () => {
   const total = ref(0)
   const page = ref(1)
   const pageSize = ref(10)
-  const query = ref<ListQuery>({})
+  const query = ref<LeaveRequestListQuery>({})
   const loading = ref(false)
 
   async function fetchAll() {
@@ -51,7 +51,7 @@ export const useLeaveStore = defineStore('leave', () => {
     pageSize.value = s
   }
 
-  function setQuery(q: ListQuery) {
+  function setQuery(q: LeaveRequestListQuery) {
     query.value = q
   }
 

@@ -32,7 +32,7 @@ const calculatedTotal = computed(() => {
 })
 
 onMounted(async () => {
-  await employeeStore.fetchAll()
+  await employeeStore.fetchAllForSelect()
   if (salaryStore.structures.length === 0) {
     await salaryStore.fetchStructures()
   }
@@ -81,7 +81,7 @@ async function handleSubmit() {
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="max-width: 600px">
         <el-form-item label="员工" prop="employee_id">
           <el-select v-model="form.employee_id" placeholder="请选择员工" filterable style="width: 100%" :disabled="isEdit">
-            <el-option v-for="emp in employeeStore.employees" :key="emp.id" :label="`${emp.name} (${emp.email})`" :value="emp.id" />
+            <el-option v-for="emp in employeeStore.allEmployees" :key="emp.id" :label="`${emp.name} (${emp.email})`" :value="emp.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="基本工资" prop="base_salary">

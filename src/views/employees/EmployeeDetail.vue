@@ -82,11 +82,8 @@ function formatDate(dt: string | null | undefined) {
         </el-descriptions-item>
         <el-descriptions-item label="上班时间">{{ employee.work_start_time || '-' }}</el-descriptions-item>
         <el-descriptions-item label="下班时间">{{ employee.work_end_time || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="关联用户">{{ employee.user_id ? `User#${employee.user_id}` : '未关联' }}</el-descriptions-item>
-        <el-descriptions-item label="部门负责人">
-          <span v-if="employee.dept_id">{{ '-' }}</span>
-          <span v-else>-</span>
-        </el-descriptions-item>
+        <el-descriptions-item label="关联用户">{{ employee.user?.username || (employee.user_id ? `User#${employee.user_id}` : '未关联') }}</el-descriptions-item>
+        <el-descriptions-item label="部门负责人">{{ departmentStore.allDepartments.find(d => d.id === employee!.dept_id)?.leader?.name || '-' }}</el-descriptions-item>
         <el-descriptions-item label="创建人">{{ employee.created_by || '-' }}</el-descriptions-item>
         <el-descriptions-item label="更新人">{{ employee.updated_by || '-' }}</el-descriptions-item>
         <el-descriptions-item label="创建时间">{{ formatDate(employee.created_at) }}</el-descriptions-item>

@@ -1,21 +1,32 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus, Delete } from '@element-plus/icons-vue'
 import { useSalaryStore } from '@/stores/salary'
+import type { SalaryStructure } from '@/types'
 
 const router = useRouter()
 const salaryStore = useSalaryStore()
 
 const keyword = ref('')
+const selectedIds = ref<number[]>([])
+
+const hasSelection = computed(() => selectedIds.value.length > 0)
 
 onMounted(() => {
   refresh()
 })
 
 function refresh() {
+  selectedIds.value = []
+  salaryStore.setStructQuery({ keyword: keyword.value || undefined })
+  salaryStore.setStructPage(1)
   salaryStore.fetchStructures()
+}
+
+function handleSearch() {
+  refresh()
 }
 
 function handlePageChange(p: number) {
@@ -28,10 +39,23 @@ function handleSizeChange(s: number) {
   salaryStore.fetchStructures()
 }
 
+function handleSelectionChange(rows: SalaryStructure[]) {
+  selectedIds.value = rows.map((r) => r.id)
+}
+
 async function handleDelete(id: number) {
   await ElMessageBox.confirm('确认删除该薪资结构？', '提示', { type: 'warning' })
   await salaryStore.deleteStructure(id)
   ElMessage.success('删除成功')
+  refresh()
+}
+
+async function handleBatchDelete() {
+  await ElMessageBox.confirm(`确认删除选中的 ${selectedIds.value.length} 条薪资结构？`, '批量删除', { type: 'warning' })
+  for (const id of selectedIds.value) {
+    await salaryStore.deleteStructure(id)
+  }
+  ElMessage.success('批量删除成功')
   refresh()
 }
 </script>
@@ -41,19 +65,23 @@ async function handleDelete(id: number) {
     <el-card style="margin-bottom: 16px">
       <el-row :gutter="12" align="middle">
         <el-col :span="6">
-          <el-input v-model="keyword" placeholder="搜索" clearable :prefix-icon="Search" @keyup.enter="refresh" @clear="refresh" />
+          <el-input v-model="keyword" placeholder="搜索" clearable :prefix-icon="Search" @keyup.enter="handleSearch" @clear="handleSearch" />
         </el-col>
         <el-col :span="3">
-          <el-button type="primary" :icon="Search" @click="refresh">搜索</el-button>
+          <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
         </el-col>
         <el-col :span="15" style="text-align: right">
+          <el-button type="danger" :icon="Delete" :disabled="!hasSelection" @click="handleBatchDelete">
+            批量删除{{ hasSelection ? `(${selectedIds.length})` : '' }}
+          </el-button>
           <el-button type="primary" :icon="Plus" @click="router.push({ name: 'salary-structure-new' })">新增薪资结构</el-button>
         </el-col>
       </el-row>
     </el-card>
 
     <el-card>
-      <el-table :data="salaryStore.structures" v-loading="salaryStore.loading" stripe border>
+      <el-table :data="salaryStore.structures" v-loading="salaryStore.loading" stripe border @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="45" align="center" />
         <el-table-column prop="id" label="ID" width="60" align="center" />
         <el-table-column label="员工" width="120">
           <template #default="{ row }">{{ row.employee?.name || '-' }}</template>

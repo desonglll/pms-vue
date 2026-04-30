@@ -1,39 +1,49 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Clock, Calendar } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Clock, Calendar, Delete } from '@element-plus/icons-vue'
 import { useAttendanceStore } from '@/stores/attendance'
 import { useEmployeeStore } from '@/stores/employees'
 import { useAuthStore } from '@/stores/auth'
+import type { AttendanceRecord } from '@/types'
 
 const attendanceStore = useAttendanceStore()
 const employeeStore = useEmployeeStore()
 const auth = useAuthStore()
 
 const activeTab = ref('records')
-const selectedEmployeeId = ref<number | undefined>(undefined)
+
+// 打卡区域
+const clockEmployeeId = ref<number | null>(null)
+const clockLoading = ref(false)
+
+// 打卡记录筛选
 const startDate = ref('')
 const endDate = ref('')
+const selectedRecordIds = ref<number[]>([])
+const hasRecordSelection = computed(() => selectedRecordIds.value.length > 0)
+
+// 考勤统计区域
+const summaryEmployeeId = ref<number | null>(null)
 const summaryForm = ref({ year: new Date().getFullYear(), month: new Date().getMonth() + 1 })
-const summaryEmployeeId = ref<number | undefined>(undefined)
-const clockLoading = ref(false)
 const summaryLoading = ref(false)
 
+const isAdmin = computed(() => auth.isAdmin)
 const isStaff = computed(() => auth.isStaff)
 
 onMounted(async () => {
   if (!isStaff.value) {
-    await employeeStore.fetchAll()
+    await employeeStore.fetchAllForSelect()
   }
-  // staff auto-sets employee_id from token
   if (isStaff.value && auth.employeeId) {
-    selectedEmployeeId.value = auth.employeeId
+    clockEmployeeId.value = auth.employeeId
     summaryEmployeeId.value = auth.employeeId
   }
   refreshRecords()
 })
 
 function refreshRecords() {
+  selectedRecordIds.value = []
   attendanceStore.setRecordQuery({
     start_date: startDate.value || undefined,
     end_date: endDate.value || undefined,
@@ -42,14 +52,16 @@ function refreshRecords() {
   attendanceStore.fetchRecords()
 }
 
+// ---- 打卡 ----
+
 async function handleClockIn() {
-  if (!selectedEmployeeId.value) {
+  if (!clockEmployeeId.value) {
     ElMessage.warning('请选择员工')
     return
   }
   clockLoading.value = true
   try {
-    await attendanceStore.clockIn(selectedEmployeeId.value)
+    await attendanceStore.clockIn(clockEmployeeId.value)
     ElMessage.success('上班打卡成功')
     refreshRecords()
   } catch {
@@ -60,13 +72,13 @@ async function handleClockIn() {
 }
 
 async function handleClockOut() {
-  if (!selectedEmployeeId.value) {
+  if (!clockEmployeeId.value) {
     ElMessage.warning('请选择员工')
     return
   }
   clockLoading.value = true
   try {
-    await attendanceStore.clockOut(selectedEmployeeId.value)
+    await attendanceStore.clockOut(clockEmployeeId.value)
     ElMessage.success('下班打卡成功')
     refreshRecords()
   } catch {
@@ -76,25 +88,7 @@ async function handleClockOut() {
   }
 }
 
-async function handleGenerateSummary() {
-  const form: Record<string, unknown> = {
-    year: summaryForm.value.year,
-    month: summaryForm.value.month,
-  }
-  if (summaryEmployeeId.value) {
-    form.employee_id = summaryEmployeeId.value
-  }
-  summaryLoading.value = true
-  try {
-    await attendanceStore.generateSummary(form as any)
-    ElMessage.success('统计生成成功')
-    attendanceStore.fetchSummaries()
-  } catch {
-    // interceptor handles error
-  } finally {
-    summaryLoading.value = false
-  }
-}
+// ---- 打卡记录 ----
 
 function handleRecordPageChange(p: number) {
   attendanceStore.setRecordPage(p)
@@ -104,6 +98,40 @@ function handleRecordPageChange(p: number) {
 function handleRecordSizeChange(s: number) {
   attendanceStore.setRecordPageSize(s)
   attendanceStore.fetchRecords()
+}
+
+function handleRecordSelectionChange(rows: AttendanceRecord[]) {
+  selectedRecordIds.value = rows.map((r) => r.id)
+}
+
+async function handleBatchDeleteRecords() {
+  await ElMessageBox.confirm(`确认删除选中的 ${selectedRecordIds.value.length} 条打卡记录？`, '批量删除', { type: 'warning' })
+  await attendanceStore.batchDeleteRecords(selectedRecordIds.value)
+  ElMessage.success('批量删除成功')
+  refreshRecords()
+}
+
+// ---- 考勤统计 ----
+
+async function handleGenerateSummary() {
+  if (!summaryEmployeeId.value) {
+    ElMessage.warning('请选择要生成统计的员工')
+    return
+  }
+  summaryLoading.value = true
+  try {
+    await attendanceStore.generateSummary({
+      employee_id: summaryEmployeeId.value,
+      year: summaryForm.value.year,
+      month: summaryForm.value.month,
+    })
+    ElMessage.success('统计生成成功')
+    attendanceStore.fetchSummaries()
+  } catch {
+    // interceptor handles error
+  } finally {
+    summaryLoading.value = false
+  }
 }
 
 function handleSummaryPageChange(p: number) {
@@ -130,17 +158,18 @@ function onTabChange(tab: string) {
 
 <template>
   <div>
+    <!-- 打卡操作区 -->
     <el-card style="margin-bottom: 16px">
       <el-row :gutter="12" align="middle">
         <el-col :span="6">
           <el-select
-            v-model="selectedEmployeeId"
-            placeholder="选择员工"
+            v-model="clockEmployeeId"
+            placeholder="选择员工（打卡）"
             filterable
             style="width: 100%"
             :disabled="isStaff"
           >
-            <el-option v-for="emp in employeeStore.employees" :key="emp.id" :label="`${emp.name} (${emp.email})`" :value="emp.id" />
+            <el-option v-for="emp in employeeStore.allEmployees" :key="emp.id" :label="`${emp.name} (${emp.email})`" :value="emp.id" />
           </el-select>
         </el-col>
         <el-col :span="3">
@@ -153,20 +182,27 @@ function onTabChange(tab: string) {
     </el-card>
 
     <el-tabs v-model="activeTab" @tab-change="onTabChange">
+      <!-- 打卡记录 -->
       <el-tab-pane label="打卡记录" name="records">
         <el-card style="margin-bottom: 16px">
           <el-row :gutter="12" align="middle">
-            <el-col :span="6">
+            <el-col :span="5">
               <el-date-picker v-model="startDate" type="date" placeholder="开始日期" value-format="YYYY-MM-DD" style="width: 100%" @change="refreshRecords" />
             </el-col>
-            <el-col :span="6">
+            <el-col :span="5">
               <el-date-picker v-model="endDate" type="date" placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 100%" @change="refreshRecords" />
+            </el-col>
+            <el-col :span="14" style="text-align: right">
+              <el-button v-if="isAdmin" type="danger" :icon="Delete" :disabled="!hasRecordSelection" @click="handleBatchDeleteRecords">
+                批量删除{{ hasRecordSelection ? `(${selectedRecordIds.length})` : '' }}
+              </el-button>
             </el-col>
           </el-row>
         </el-card>
 
         <el-card>
-          <el-table :data="attendanceStore.records" v-loading="attendanceStore.loading" stripe border>
+          <el-table :data="attendanceStore.records" v-loading="attendanceStore.loading" stripe border @selection-change="handleRecordSelectionChange">
+            <el-table-column type="selection" width="45" align="center" />
             <el-table-column prop="id" label="ID" width="60" align="center" />
             <el-table-column label="员工" width="100">
               <template #default="{ row }">{{ row.employee?.name || '-' }}</template>
@@ -195,12 +231,13 @@ function onTabChange(tab: string) {
         </el-card>
       </el-tab-pane>
 
+      <!-- 考勤统计 -->
       <el-tab-pane label="考勤统计" name="summaries">
         <el-card style="margin-bottom: 16px">
           <el-row :gutter="12" align="middle">
-            <el-col :span="4" v-if="!isStaff">
-              <el-select v-model="summaryEmployeeId" placeholder="选择员工(可选)" filterable clearable style="width: 100%">
-                <el-option v-for="emp in employeeStore.employees" :key="emp.id" :label="emp.name" :value="emp.id" />
+            <el-col :span="6" v-if="!isStaff">
+              <el-select v-model="summaryEmployeeId" placeholder="选择员工（生成统计）" filterable style="width: 100%">
+                <el-option v-for="emp in employeeStore.allEmployees" :key="emp.id" :label="emp.name" :value="emp.id" />
               </el-select>
             </el-col>
             <el-col :span="3">
@@ -209,7 +246,7 @@ function onTabChange(tab: string) {
             <el-col :span="3">
               <el-input-number v-model="summaryForm.month" :min="1" :max="12" style="width: 100%" />
             </el-col>
-            <el-col :span="3">
+            <el-col :span="4">
               <el-button type="primary" :icon="Calendar" @click="handleGenerateSummary" :loading="summaryLoading" :disabled="isStaff">生成统计</el-button>
             </el-col>
           </el-row>

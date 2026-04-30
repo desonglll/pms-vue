@@ -15,11 +15,12 @@
 
 | 方法 | 路径 | 说明 | 请求体 |
 |------|------|------|--------|
-| GET | /api/users | 用户列表 | - |
+| GET | /api/users | 用户列表（分页） | keyword, sort_by, sort_desc, page, page_size |
 | GET | /api/users/:id | 用户详情 | - |
 | PUT | /api/users/:id/status | 修改状态 | { status: "active"/"disabled" } |
 | PUT | /api/users/:id/roles | 分配角色 | { role_ids: [1, 2] } |
-| PUT | /api/users/:id/password | 重置密码（admin） | { password } |
+| PUT | /api/users/:id/password | 重置密码（admin） | { new_password } |
+| DELETE | /api/users/:id | 删除用户 | - |
 
 ## 角色接口（需 admin/manager 角色）
 
