@@ -44,11 +44,6 @@ export const useSalaryStore = defineStore('salary', () => {
     }
   }
 
-  async function fetchStructure(id: number) {
-    const { data } = await api.getSalaryStructure(id)
-    return data
-  }
-
   async function createStructure(form: SalaryStructureForm) {
     await api.createSalaryStructure(form)
   }
@@ -103,10 +98,6 @@ export const useSalaryStore = defineStore('salary', () => {
     await api.updateSalaryRecord(id, data)
   }
 
-  async function deleteRecord(id: number) {
-    await api.deleteSalaryRecord(id)
-  }
-
   async function submitRecord(id: number) {
     await api.submitSalaryRecord(id)
   }
@@ -142,8 +133,8 @@ export const useSalaryStore = defineStore('salary', () => {
   return {
     structures, structTotal, structPage, structPageSize, structQuery,
     records, recordTotal, recordPage, recordPageSize, recordQuery, loading,
-    fetchStructures, fetchStructure, createStructure, updateStructure, deleteStructure, setStructPage, setStructPageSize, setStructQuery,
-    fetchRecords, fetchRecord, createRecord, updateRecord, deleteRecord, setRecordPage, setRecordPageSize, setRecordQuery,
+    fetchStructures, createStructure, updateStructure, deleteStructure, setStructPage, setStructPageSize, setStructQuery,
+    fetchRecords, fetchRecord, createRecord, updateRecord, setRecordPage, setRecordPageSize, setRecordQuery,
     submitRecord, approveRecord, rejectRecord, payRecord, batchGenerate,
   }
 })

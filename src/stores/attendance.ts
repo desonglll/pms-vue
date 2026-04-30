@@ -44,10 +44,6 @@ export const useAttendanceStore = defineStore('attendance', () => {
     await api.generateAttendanceSummary(form)
   }
 
-  async function deleteRecord(id: number) {
-    await api.deleteAttendanceRecord(id)
-  }
-
   async function batchDeleteRecords(ids: number[]) {
     await api.batchDeleteAttendanceRecords(ids)
   }
@@ -94,7 +90,7 @@ export const useAttendanceStore = defineStore('attendance', () => {
   return {
     records, recordTotal, recordPage, recordPageSize, recordQuery, loading,
     summaries, summaryTotal, summaryPage, summaryPageSize, summaryQuery,
-    fetchRecords, clockIn, clockOut, generateSummary, deleteRecord, batchDeleteRecords, fetchSummaries,
+    fetchRecords, clockIn, clockOut, generateSummary, batchDeleteRecords, fetchSummaries,
     setRecordQuery, setRecordPage, setRecordPageSize, setSummaryPage, setSummaryPageSize, setSummaryQuery,
   }
 })

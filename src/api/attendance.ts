@@ -20,14 +20,6 @@ export function getAttendanceRecords(params?: AttendanceRecordListQuery) {
   return http.get<ListResult<AttendanceRecord>>('/attendance/records', { params })
 }
 
-export function getAttendanceRecord(id: number) {
-  return http.get<AttendanceRecord>(`/attendance/records/${id}`)
-}
-
-export function deleteAttendanceRecord(id: number) {
-  return http.delete(`/attendance/records/${id}`)
-}
-
 export function batchDeleteAttendanceRecords(ids: number[]) {
   return http.delete('/attendance/records/batch', { data: { ids } })
 }

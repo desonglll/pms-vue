@@ -16,10 +16,6 @@ export function getSalaryStructures(params?: ListQuery) {
   return http.get<ListResult<SalaryStructure>>('/salaries/structures', { params })
 }
 
-export function getSalaryStructure(id: number) {
-  return http.get<SalaryStructure>(`/salaries/structures/${id}`)
-}
-
 export function getSalaryStructureByEmployee(empId: number) {
   return http.get<SalaryStructure>(`/salaries/structures/employees/${empId}`)
 }
@@ -53,10 +49,6 @@ export function createSalaryRecord(data: SalaryRecordForm) {
 
 export function updateSalaryRecord(id: number, data: { performance_factor?: number }) {
   return http.put(`/salaries/records/${id}`, data)
-}
-
-export function deleteSalaryRecord(id: number) {
-  return http.delete(`/salaries/records/${id}`)
 }
 
 export function submitSalaryRecord(id: number) {

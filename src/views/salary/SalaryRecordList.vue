@@ -2,7 +2,7 @@
 import { onMounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Plus, Delete, Check, Close, Promotion, Upload } from '@element-plus/icons-vue'
+import { Search, Plus, Check, Close, Promotion, Upload } from '@element-plus/icons-vue'
 import { useSalaryStore } from '@/stores/salary'
 import { useEmployeeStore } from '@/stores/employees'
 import type { SalaryRecord, SalaryStatus } from '@/types'
@@ -86,13 +86,6 @@ async function handlePay(id: number) {
   refresh()
 }
 
-async function handleDelete(id: number) {
-  await ElMessageBox.confirm('确认删除该薪资记录？', '提示', { type: 'warning' })
-  await salaryStore.deleteRecord(id)
-  ElMessage.success('删除成功')
-  refresh()
-}
-
 async function handleBatchSubmit() {
   await ElMessageBox.confirm(`确认提交选中的 ${selectedIds.value.length} 条记录审核？`, '批量提交', { type: 'warning' })
   for (const id of selectedIds.value) {
@@ -129,14 +122,6 @@ async function handleBatchPay() {
   refresh()
 }
 
-async function handleBatchDelete() {
-  await ElMessageBox.confirm(`确认删除选中的 ${selectedIds.value.length} 条记录？`, '批量删除', { type: 'warning' })
-  for (const id of selectedIds.value) {
-    await salaryStore.deleteRecord(id)
-  }
-  ElMessage.success('批量删除成功')
-  refresh()
-}
 </script>
 
 <template>
@@ -170,9 +155,6 @@ async function handleBatchDelete() {
           </el-button>
           <el-button type="primary" :icon="Promotion" :disabled="!hasSelection" @click="handleBatchPay">
             批量发放{{ hasSelection ? `(${selectedIds.length})` : '' }}
-          </el-button>
-          <el-button type="danger" :icon="Delete" :disabled="!hasSelection" @click="handleBatchDelete">
-            批量删除{{ hasSelection ? `(${selectedIds.length})` : '' }}
           </el-button>
           <el-button type="primary" :icon="Plus" @click="router.push({ name: 'salary-record-new' })">新增薪资记录</el-button>
         </el-col>
@@ -211,7 +193,6 @@ async function handleBatchDelete() {
             <el-button v-if="row.status === 'pending'" size="small" type="danger" link @click="handleReject(row.id)">驳回</el-button>
             <el-button v-if="row.status === 'approved'" size="small" type="primary" link @click="handlePay(row.id)">发放</el-button>
             <el-button v-if="row.status === 'draft'" size="small" type="primary" link @click="router.push({ name: 'salary-record-edit', params: { id: row.id } })">编辑</el-button>
-            <el-button v-if="row.status === 'draft'" size="small" type="danger" link @click="handleDelete(row.id)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
