@@ -83,18 +83,14 @@ async function handleReject(id: number) {
 
 async function handleBatchApprove() {
   await ElMessageBox.confirm(`确认通过选中的 ${selectedIds.value.length} 条请假申请？`, '批量审批', { type: 'warning' })
-  for (const id of selectedIds.value) {
-    await leaveStore.approve(id)
-  }
+  await leaveStore.batchApprove(selectedIds.value)
   ElMessage.success('批量审批通过')
   refresh()
 }
 
 async function handleBatchReject() {
   await ElMessageBox.confirm(`确认驳回选中的 ${selectedIds.value.length} 条请假申请？`, '批量驳回', { type: 'warning' })
-  for (const id of selectedIds.value) {
-    await leaveStore.reject(id)
-  }
+  await leaveStore.batchReject(selectedIds.value)
   ElMessage.success('批量驳回成功')
   refresh()
 }

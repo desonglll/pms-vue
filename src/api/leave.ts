@@ -17,6 +17,14 @@ export function approveLeave(id: number) {
   return http.put(`/leaves/${id}/approve`)
 }
 
+export function batchApproveLeaves(ids: number[]) {
+  return http.put('/leaves/batch/approve', { ids })
+}
+
+export function batchRejectLeaves(ids: number[]) {
+  return http.put('/leaves/batch/reject', { ids })
+}
+
 export function rejectLeave(id: number) {
   return http.put(`/leaves/${id}/reject`)
 }

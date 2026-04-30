@@ -39,6 +39,14 @@ export const useLeaveStore = defineStore('leave', () => {
     await api.approveLeave(id)
   }
 
+  async function batchApprove(ids: number[]) {
+    await api.batchApproveLeaves(ids)
+  }
+
+  async function batchReject(ids: number[]) {
+    await api.batchRejectLeaves(ids)
+  }
+
   async function reject(id: number) {
     await api.rejectLeave(id)
   }
@@ -55,5 +63,5 @@ export const useLeaveStore = defineStore('leave', () => {
     query.value = q
   }
 
-  return { leaves, total, page, pageSize, query, loading, fetchAll, fetchOne, create, approve, reject, setPage, setPageSize, setQuery }
+  return { leaves, total, page, pageSize, query, loading, fetchAll, fetchOne, create, approve, reject, batchApprove, batchReject, setPage, setPageSize, setQuery }
 })
